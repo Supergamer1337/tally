@@ -23,7 +23,8 @@ jobs:
         with:
           go-version-file: go.mod
       - name: gofmt
-        run: test -z "$(gofmt -l . | tee /dev/stderr)"
+        # Only the repository's files: the dev shell keeps Go's module cache in .cache/.
+        run: test -z "$(git ls-files -z '*.go' | xargs -0 gofmt -l | tee /dev/stderr)"
       - run: go vet ./...
       - run: go test -race ./...
 

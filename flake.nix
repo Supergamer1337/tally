@@ -18,6 +18,16 @@
           gopls
           sqlite
         ];
+
+        # Keep Go's module and build caches in the checkout rather than the home directory.
+        # Worktrees share the main checkout's caches. -modcacherw keeps them deletable with rm -rf.
+        shellHook = ''
+          root=$(dirname "$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null || echo "$PWD/.git")")
+          export GOMODCACHE="$root/.cache/go-mod"
+          export GOCACHE="$root/.cache/go-build"
+          export GOFLAGS=-modcacherw
+          unset root
+        '';
       };
     };
 }
