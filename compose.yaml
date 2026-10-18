@@ -1,0 +1,35 @@
+# Run tally with `docker compose up -d`, behind a reverse proxy that terminates HTTPS.
+# Put the settings in a .env file next to this one; every line there reaches tally.
+# Single quotes keep $ and # in a value. For example:
+#   TALLY_PASSWORD='something long'
+#   TALLY_PUBLIC_URL=https://tally.example.com
+# and to sign in with Authelia (see the README):
+#   TALLY_OIDC_ISSUER=https://auth.example.com
+#   TALLY_OIDC_CLIENT_SECRET='...'
+#   TALLY_OIDC_USERS=your-authelia-username
+#   TALLY_OIDC_NAME=Authelia
+services:
+  tally:
+    image: ghcr.io/supergamer1337/tally:latest
+    container_name: tally # so `docker exec tally /tally <command>` works
+    restart: unless-stopped
+    # Only the proxy on this machine can reach tally. If the proxy runs in Docker, drop the
+    # port and put both on one network instead.
+    ports:
+      - "127.0.0.1:8080:8080"
+    env_file: .env
+    environment:
+      TZ: Europe/Stockholm
+      # The proxy reaches tally from a Docker network address, so X-Forwarded-For from those
+      # addresses is believed. That only decides whose wrong passwords are counted, and any
+      # container on this host could set it. Narrow it to your proxy's address if you know it.
+      TALLY_TRUSTED_PROXIES: 172.16.0.0/12
+      # If Authelia has a certificate from a private CA, mount the CA (readable by everyone,
+      # the container runs as user 65532) and point SSL_CERT_FILE at it:
+      # SSL_CERT_FILE: /ca.crt
+    volumes:
+      - tally-data:/data
+      # - ./ca.crt:/ca.crt:ro
+
+volumes:
+  tally-data:

@@ -1,0 +1,274 @@
+/* tally, Outline design. Ported from design/reference/styles.css, which is the spec.
+   Dark only for now.
+   Layout answers to the width of .app, so it works the same in a frame or a full window. */
+
+/* Geist and Geist Mono, self hosted. SIL Open Font License, see fonts/OFL.txt. */
+@font-face { font-family: 'Geist'; font-style: normal; font-weight: 300 700; font-display: swap; src: url(fonts/geist-latin-ext.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Geist'; font-style: normal; font-weight: 300 700; font-display: swap; src: url(fonts/geist-latin.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Geist Mono'; font-style: normal; font-weight: 400 700; font-display: swap; src: url(fonts/geist-mono-latin-ext.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Geist Mono'; font-style: normal; font-weight: 400 700; font-display: swap; src: url(fonts/geist-mono-latin.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+:root {
+  color-scheme: dark;
+  --font: 'Geist', system-ui, sans-serif;
+  --mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --size: 17px;
+
+  --bg: #000000;
+  --line: #2E2E2E;
+  --text: #EDEDED;
+  --muted: #8F8F8F;
+  /* Amounts as text: warm for more, cool for less */
+  --more: #FFB224;
+  --less: #52A8FF;
+  /* Chart marks: a validated warm and cool pair, and a grey for a normal day */
+  --viz-more: #D95926;
+  --viz-less: #3987E5;
+  --viz-mid: #383835;
+
+  --pad: 20px;
+  --max: 1320px;
+}
+
+* { box-sizing: border-box; margin: 0; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body { height: 100dvh; overflow: hidden; background: var(--bg); }
+button, input { font: inherit; color: inherit; }
+button { background: none; border: 0; padding: 0; cursor: pointer; }
+ul { list-style: none; padding: 0; }
+
+.app { position: relative; height: 100%; container: app / inline-size; isolation: isolate; overflow: hidden; background: var(--bg); color: var(--text); font: 400 var(--size)/1.4 var(--font); -webkit-tap-highlight-color: transparent; }
+.app :focus-visible { outline: 2px solid var(--text); outline-offset: 2px; border-radius: 6px; }
+.app a { color: inherit; text-decoration: none; }
+.i { flex: none; display: block; }
+.more { color: var(--more); }
+.less { color: var(--less); }
+.even { color: var(--muted); }
+.tn { font-variant-numeric: tabular-nums; }
+
+/* Shell: tabs under the content on a phone */
+.shell { height: 100%; display: flex; flex-direction: column; }
+.main { flex: 1; min-width: 0; min-height: 0; overflow-y: auto; padding: 0 var(--pad) 32px; }
+.grid { display: flex; flex-direction: column; }
+.nav { order: 2; display: flex; background: var(--bg); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); }
+.brand, .nav-bal { display: none; }
+.links { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); }
+.links a { display: grid; justify-items: center; gap: 2px; padding: 9px 0 10px; font-size: 13px; font-weight: 500; color: var(--muted); }
+.links a[aria-current] { color: var(--text); box-shadow: inset 0 2px 0 var(--text); }
+/* Words and tabs that belong to one width only. */
+.links .wide { display: none; }
+.ic { display: grid; place-items: center; }
+
+/* Panels are rows divided by hairlines. data-on lists the screens a panel belongs to. */
+.panel { display: none; flex-direction: column; min-width: 0; padding: 22px 0; border-bottom: 1px solid var(--line); }
+.app[data-screen="today"] [data-on~="today"],
+.app[data-screen="balance"] [data-on~="balance"],
+.app[data-screen="agents"] [data-on~="agents"] { display: flex; }
+/* Columns group panels on a wide screen. On a phone they vanish and the panels stack in order. */
+.col { display: contents; }
+.filters { align-items: flex-start; padding: 14px 0; }
+.custom { display: flex; gap: 10px; margin-top: 10px; }
+.custom label { display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 10px 0 12px; border-radius: 4px; border: 1px solid var(--line); font-size: 15px; color: var(--muted); }
+.custom label:focus-within { border-color: var(--text); }
+.custom input { min-width: 0; border: 0; outline: 0; background: none; color: var(--text); font-size: 15px; }
+.span { display: flex; align-items: baseline; gap: 8px; margin-top: 12px; font-size: 15px; color: var(--muted); }
+
+h2 { margin-bottom: 12px; font-size: 14px; font-weight: 500; line-height: 1.25; color: var(--muted); }
+.label { color: var(--muted); font-size: 14px; }
+.big { font-size: 40px; line-height: 1.1; font-weight: 600; letter-spacing: -.04em; }
+.trio { display: none; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+.app[data-screen="balance"] .trio { display: grid; }
+.trio dt { font-size: 14px; color: var(--muted); }
+/* Figures in running text and lists use the mono face */
+.trio dd, .list .v, .nav-bal b, .span b { font-family: var(--mono); font-size: 15px; font-weight: 500; }
+
+/* Add */
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 3px; border-radius: 6px; border: 1px solid var(--line); }
+.seg button { height: 40px; border-radius: 2px; font-weight: 500; color: var(--muted); }
+.seg [aria-checked="true"] { background: var(--text); color: var(--bg); }
+.amount { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+.num { display: flex; align-items: center; gap: 8px; height: 68px; padding: 0 18px; border-radius: 6px; border: 1px solid var(--line); cursor: text; }
+.num:focus-within { border-color: var(--text); }
+/* The amount and note fields show focus with their border. Without this the app wide focus
+   ring would draw a second one around the bare input inside. */
+.num input:focus-visible, .text:focus-visible { outline: none; }
+.num input { flex: 1; min-width: 0; width: 100%; border: 0; outline: 0; background: none; font-size: 32px; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+.num input::placeholder { color: var(--muted); opacity: .55; }
+.num span { font-size: 18px; color: var(--muted); }
+.quick { display: flex; gap: 8px; margin-top: 10px; }
+.quick button { height: 40px; padding: 0 16px; border-radius: 6px; border: 1px solid var(--line); font-weight: 500; font-size: 15px; }
+.quick #clear { margin-left: auto; padding: 0 6px; border-color: transparent; color: var(--muted); }
+.meta { display: grid; grid-template-columns: auto 1fr; gap: 10px; margin-top: 14px; }
+.pick { position: relative; display: flex; align-items: center; gap: 6px; height: 48px; padding: 0 12px 0 14px; border-radius: 4px; border: 1px solid var(--line); font-weight: 500; white-space: nowrap; }
+.pick input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.pick:focus-within { outline: 2px solid var(--text); outline-offset: 2px; }
+.text { min-width: 0; height: 48px; padding: 0 14px; border-radius: 4px; border: 1px solid var(--line); background: none; outline: 0; }
+.text::placeholder { color: var(--muted); opacity: 1; }
+.text:focus { border-color: var(--text); }
+/* What the picked day already holds. Saving adds to it. */
+.has { margin-top: 10px; font-size: 14px; color: var(--muted); }
+.has b { font-family: var(--mono); font-size: 14px; font-weight: 500; }
+.save { width: 100%; height: 48px; margin-top: 14px; border-radius: 6px; background: var(--text); color: var(--bg); font-weight: 500; font-size: 16px; }
+.save:disabled { opacity: .3; cursor: default; }
+
+/* Lists */
+.list li { display: flex; align-items: center; gap: 10px; min-height: 54px; border-bottom: 1px solid var(--line); }
+.list li:last-child { border-bottom: 0; }
+.list .grow { flex: 1; min-width: 0; }
+.list .open { align-self: stretch; text-align: left; }
+/* The day in the form. A bar on the left, like the tab underline turned on its side. */
+.list li:has(> [aria-current]) { margin-left: -12px; padding-left: 12px; box-shadow: inset 2px 0 0 var(--text); }
+.list b { display: block; font-weight: 500; }
+.list small { display: block; font-size: 14px; line-height: 1.2; color: var(--muted); }
+.list code, .list .when { color: var(--muted); }
+.list .mh { min-height: 44px; align-items: flex-end; padding-bottom: 6px; font-size: 14px; font-weight: 600; color: var(--muted); }
+.del { width: 40px; height: 44px; margin-right: -10px; display: grid; place-items: center; color: var(--muted); }
+
+/* Stats */
+/* Five equal buttons that fill a phone and stop growing on a desktop */
+.range { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 2px; width: 100%; max-width: 400px; padding: 3px; border-radius: 6px; border: 1px solid var(--line); }
+.range button { min-width: 0; height: 40px; padding: 0 2px; border-radius: 4px; font-size: 14px; font-weight: 500; color: var(--muted); }
+.range [aria-pressed="true"] { background: var(--text); color: var(--bg); }
+.plot { position: relative; flex: 1; min-height: 260px; margin-top: 14px; touch-action: pan-y; cursor: crosshair; outline-offset: 6px; }
+.plot.cal { flex: none; min-height: 0; cursor: default; }
+.plot svg { position: absolute; inset: 0; display: block; overflow: visible; }
+.plot text { font-size: 11.5px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+.plot .cap { font-size: 12.5px; }
+.plot .g { stroke: var(--line); stroke-width: 1; }
+.plot .z { stroke: var(--muted); stroke-width: 1; opacity: .75; }
+.plot .conn { fill: none; stroke: var(--muted); stroke-width: 1; }
+.plot .more { fill: var(--viz-more); }
+.plot .less { fill: var(--viz-less); }
+.plot .end, .plot .pt { fill: var(--text); stroke: var(--bg); stroke-width: 2; }
+.plot .endl { fill: var(--text); font-size: 12.5px; font-weight: 600; paint-order: stroke; stroke: var(--bg); stroke-width: 4px; stroke-linejoin: round; }
+.plot .band { fill: var(--text); opacity: 0; }
+.plot .band.on { opacity: .08; }
+.plot .pt { opacity: 0; }
+.plot .pt.on { opacity: 1; }
+.plot.dim [data-b] { opacity: .4; }
+.plot.dim [data-b].hit { opacity: 1; }
+/* Calendar: grey for a normal day, four steps to each pole */
+.cal .none { fill: var(--viz-mid); }
+.cal .off { fill: var(--viz-mid); opacity: .45; }
+.cal .m1 { fill: color-mix(in oklab, var(--viz-more) 34%, var(--viz-mid)); }
+.cal .m2 { fill: color-mix(in oklab, var(--viz-more) 56%, var(--viz-mid)); }
+.cal .m3 { fill: color-mix(in oklab, var(--viz-more) 78%, var(--viz-mid)); }
+.cal .m4 { fill: var(--viz-more); }
+.cal .l1 { fill: color-mix(in oklab, var(--viz-less) 34%, var(--viz-mid)); }
+.cal .l2 { fill: color-mix(in oklab, var(--viz-less) 56%, var(--viz-mid)); }
+.cal .l3 { fill: color-mix(in oklab, var(--viz-less) 78%, var(--viz-mid)); }
+.cal .l4 { fill: var(--viz-less); }
+.cal .today { stroke: var(--muted); stroke-width: 1.5; }
+/* Days still to come in the period: outlines, nothing to show yet. */
+.cal .later { fill: none; stroke: var(--line); stroke-width: 1; }
+.cal .hit, .cal .sel { stroke: var(--text); stroke-width: 2; }
+.tip { position: absolute; z-index: 2; min-width: 136px; padding: 8px 10px; border-radius: 10px; background: var(--text); color: var(--bg); font-size: 13px; line-height: 1.35; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity .1s; box-shadow: 0 6px 20px rgba(0, 0, 0, .25); }
+.tip.on { opacity: 1; }
+.tip .t { font-weight: 600; }
+.tip .s { font-size: 12px; opacity: .72; }
+.tip .r { display: flex; align-items: center; gap: 8px; margin-top: 3px; }
+.tip .r b { margin-left: auto; padding-left: 14px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.tip .k { flex: none; width: 10px; height: 10px; border-radius: 2px; }
+.tip .k.more { background: var(--viz-more); }
+.tip .k.less { background: var(--viz-less); }
+.tip .k.line { height: 2px; background: currentColor; }
+
+/* Agents */
+.well { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding: 10px 8px 10px 16px; border-radius: 4px; border: 1px solid var(--line); }
+#access { margin-bottom: 8px; }
+.well div { flex: 1; min-width: 0; }
+.well .k { display: block; font-size: 13px; color: var(--muted); }
+code { font: 500 14px/1.4 ui-monospace, 'SF Mono', Menlo, Consolas, monospace; }
+.well code { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.copy { height: 40px; padding: 0 14px; border-radius: 2px; border: 1px solid var(--line); font-size: 15px; font-weight: 500; }
+.sw { position: relative; display: flex; align-items: center; justify-content: space-between; min-height: 60px; margin-top: 4px; cursor: pointer; }
+.sw input { position: absolute; opacity: 0; }
+.sw i { position: relative; width: 52px; height: 32px; border-radius: 16px; background: var(--line); transition: background .15s; }
+.sw i::after { content: ''; position: absolute; top: 3px; left: 3px; width: 26px; height: 26px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 1px 2px rgba(0, 0, 0, .3); transition: transform .15s; }
+.sw input:checked + i { background: var(--text); }
+.sw input:checked + i::after { transform: translateX(20px); background: var(--bg); box-shadow: none; }
+.sw input:focus-visible + i { outline: 2px solid var(--text); outline-offset: 2px; }
+
+.toast { position: absolute; left: 50%; bottom: calc(76px + env(safe-area-inset-bottom)); transform: translate(-50%, 12px); display: flex; align-items: center; gap: 14px; height: 48px; padding: 0 6px 0 18px; border-radius: 8px; background: var(--text); color: var(--bg); font-weight: 600; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity .18s, transform .18s; z-index: 5; }
+.toast.on { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+.toast button { height: 36px; padding: 0 14px; border-radius: 5px; background: var(--bg); color: var(--text); font-weight: 600; }
+
+/* Desktop: a top bar and one ruled sheet. Columns share a border, panels are rows inside them. */
+@container app (min-width: 860px) {
+  .main { padding: 0 40px 56px; }
+  .grid { display: grid; align-items: stretch; max-width: var(--max); margin: 36px auto 0; overflow: hidden; border: 1px solid var(--line); border-radius: 10px; }
+  .col { display: flex; flex-direction: column; min-width: 0; margin: 0 -1px -1px 0; border-right: 1px solid var(--line); }
+  .panel { padding: 28px; }
+  .filters { padding-block: 14px; }
+  /* A desktop has room for Add and Stats side by side, so they are one screen, Time: the
+     balance and the form, the period and its charts, and the period's days. #balance shows
+     the same as #today, and Days takes the place of Recent. */
+  .app:is([data-screen="today"], [data-screen="balance"]) :is([data-on~="today"], [data-on~="balance"], [data-on~="today-wide"]) { display: flex; }
+  .app #p-recent { display: none; }
+  .links .narrow { display: none; }
+  .links .wide { display: inline; }
+  .trio { display: grid; }
+  .plot { min-height: 340px; max-height: 460px; }
+  /* The calendar beside the form is its date picker. */
+  .plot.cal { min-height: 0; max-height: none; cursor: pointer; }
+  .range button { height: 28px; }
+  /* Days scrolls in its own column, beside the charts, with its month always in view, rather
+     than making the page as long as the year. */
+  .app:not([data-screen="agents"]) #c3 { position: relative; }
+  .app:not([data-screen="agents"]) #p-days { position: absolute; inset: 0; border-bottom: 0; }
+  /* The scroller reaches past the rows on both sides: 12px left for the bar on the picked day,
+     10px right for the delete buttons, which hang into the panel's padding. It scrolls up and
+     down only. */
+  #p-days .list { flex: 1; min-height: 0; overflow: hidden auto; margin: 0 -10px 0 -12px; padding: 0 10px 0 12px; }
+  #p-days .mh { position: sticky; top: 0; z-index: 1; background: var(--bg); }
+  .toast { bottom: 28px; }
+
+  .nav { order: 0; align-items: center; gap: 28px; height: 56px; padding: 0 40px; border-top: 0; border-bottom: 1px solid var(--line); }
+  .brand { display: block; font-size: 21px; font-weight: 700; }
+  .links { flex: none; align-self: stretch; display: flex; gap: 20px; }
+  .links a { display: flex; align-items: center; gap: 8px; padding: 0; font-size: 15px; }
+  .links a[aria-current] { box-shadow: inset 0 -2px 0 var(--text); }
+  .links .ic { display: none; }
+  .nav-bal { display: flex; align-items: baseline; gap: 8px; margin-left: auto; color: var(--muted); font-size: 15px; }
+  .nav-bal b { color: var(--text); font-size: 17px; font-weight: 600; }
+
+  /* Only one column spans rows on each screen, so the others stack tight */
+  .app[data-screen="agents"] :is(#c1, #c2, #c3), .app:not([data-screen="agents"]) :is(#a1, #a2) { display: none; }
+  .app:not([data-screen="agents"]) .grid { grid-template-columns: minmax(340px, 400px) minmax(0, 1fr); grid-template-rows: auto minmax(360px, 1fr); }
+  .app:not([data-screen="agents"]) #c1 { grid-area: 1 / 1; }
+  .app:not([data-screen="agents"]) #c3 { grid-area: 2 / 1; }
+  .app:not([data-screen="agents"]) #c2 { grid-area: 1 / 2 / 3 / 3; }
+  .app[data-screen="agents"] .grid { grid-template-columns: 1fr 1fr; }
+}
+
+/* Wide desktop: Days gets a third column of its own */
+@container app (min-width: 1180px) {
+  .app:not([data-screen="agents"]) .grid { grid-template-columns: minmax(320px, 380px) minmax(0, 1fr) minmax(300px, 380px); grid-template-rows: auto; }
+  .app:not([data-screen="agents"]) :is(#c1, #c2, #c3) { grid-area: auto; }
+}
+
+/* The smallest phones: five period labels need a little less room. */
+@container app (max-width: 359px) {
+  .range button { font-size: 13px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app *, .app *::before, .app *::after { transition-duration: .01ms !important; }
+}
+
+/* Focus lands on main after Undo from the keyboard. It needs no ring. */
+.app .main:focus { outline: none; }
+
+/* Sign in. Not designed yet, so it borrows the Add form: one field and the Save button.
+   With single sign on, its button comes first and the password sits under a hairline, as the
+   way in for when the provider is down. */
+.login { display: grid; place-items: center; padding: 24px var(--pad) calc(24px + env(safe-area-inset-bottom)); }
+.login .box { width: 100%; max-width: 360px; display: grid; gap: 14px; }
+.login form { display: grid; gap: 14px; }
+.login .brand { display: block; margin-bottom: 10px; font-size: 21px; font-weight: 700; }
+.login .text { width: 100%; }
+.login .save { margin-top: 0; }
+.login a.save { display: grid; place-items: center; color: var(--bg); }
+.login .sso + form { margin-top: 10px; padding-top: 24px; border-top: 1px solid var(--line); }
+.login .alt { height: 48px; border-radius: 6px; border: 1px solid var(--line); font-weight: 500; font-size: 16px; }
+.login .err { font-size: 14px; color: var(--less); }

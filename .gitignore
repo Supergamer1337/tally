@@ -1,0 +1,7 @@
+.playwright-mcp/
+.direnv/
+/tally
+/data/
+*.db
+*.db-shm
+*.db-wal
