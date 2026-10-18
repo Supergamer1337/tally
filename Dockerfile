@@ -17,11 +17,15 @@ RUN --mount=type=cache,target=/go/pkg/mod --mount=type=cache,target=/root/.cache
 # One static binary and the CA certificates it needs to reach a sign in provider over HTTPS.
 # Time zones are built into the binary. For a provider with a private CA, mount its certificate
 # and point SSL_CERT_FILE at it.
+#
+# The container starts as root only so tally can make /data its own, which a bind mount that
+# Docker created for root is not. It then runs as PUID:PGID. Run it with `user:` and it starts as
+# that user and leaves /data alone.
 FROM scratch
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=build /out/tally /tally
 COPY --from=build --chown=65532:65532 /out/data /data
-USER 65532:65532
+ENV PUID=65532 PGID=65532
 ENV TALLY_ADDR=:8080 TALLY_DB=/data/tally.db
 EXPOSE 8080
 VOLUME /data

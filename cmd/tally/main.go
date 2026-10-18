@@ -11,6 +11,8 @@
 //	TALLY_TRUSTED_PROXIES addresses of reverse proxies whose X-Forwarded-For to believe, like 172.16.0.0/12
 //	TZ                   the time zone that decides what today is, like Europe/Stockholm
 //	TALLY_LOG=debug      log every MCP request, to see what an agent sends
+//	PUID, PGID           started as root, as the image is, tally makes its data directory its
+//	                     own and then runs as this user and group (65532 in the image)
 package main
 
 import (
@@ -60,6 +62,12 @@ func main() {
 		level = slog.LevelDebug
 	}
 	log := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: level}))
+	// Before anything touches the database, so no command run as root leaves files behind that
+	// the server cannot write.
+	if err := dropRoot(log); err != nil {
+		fmt.Fprintln(os.Stderr, "tally:", err)
+		os.Exit(1)
+	}
 	cmd := "serve"
 	if len(os.Args) > 1 {
 		cmd = os.Args[1]

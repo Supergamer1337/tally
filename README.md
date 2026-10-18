@@ -65,8 +65,12 @@ location / {
 }
 ```
 
-The container runs as user 65532 and keeps everything in `/data`. A named volume works as is.
-A bind mount needs to be writable by that user: `chown 65532:65532 ./data`.
+tally keeps everything in `/data`. The container starts as root only to make that directory its
+own, then runs as user 65532, or as `PUID` and `PGID` if you set them, so a bind mount works
+however Docker created it. Set `PUID` and `PGID` to your own ids to own the files yourself. tally
+only takes over a directory that is empty or holds nothing but its own files; anything else is
+left alone, with a message saying so. Running the container with `user:`, or with all
+capabilities dropped, skips this: then give the directory to that user yourself.
 
 To update, `docker compose pull && docker compose up -d`. After changing `.env`, run
 `docker compose up -d` as well: `restart` keeps the old settings.
@@ -96,6 +100,7 @@ The volume's name is the compose project (the directory's name) followed by `_ta
 | `TALLY_AUTH` | | `off` turns sign in off, for a proxy that does its own. Needs `TALLY_PUBLIC_URL`, and then only requests for that host, `localhost` or a plain IP address are answered. |
 | `TALLY_OIDC_*` | | Sign in with Authelia or another OpenID Connect provider. See [Sign in with Authelia](#sign-in-with-authelia). |
 | `TALLY_LOG` | | `debug` logs every MCP request with its protocol version, method and agent. |
+| `PUID`, `PGID` | `65532` | The user and group tally runs as, and owns `/data` as. |
 | `TALLY_DB` | `/data/tally.db` in the image | The SQLite file. |
 | `TALLY_ADDR` | `:8080` | Where to listen. |
 
