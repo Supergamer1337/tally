@@ -1,0 +1,152 @@
+<!doctype html>
+<!--
+  tally, Outline design. A clickable reference for building the real app, not production code.
+  Three screens picked by the hash: #today (Add), #balance (Stats), #agents.
+  Dark only for now. Sample data lives in memory and resets on reload.
+  Run: python3 design/reference/serve.py
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>tally</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400..700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app" id="app" data-screen="today">
+  <div class="shell">
+    <nav class="nav" aria-label="Screens">
+      <a class="brand" href="#today">tally</a>
+      <div class="links">
+        <a href="#today"><span class="ic" data-i="plus"></span><span>Add</span></a>
+        <a href="#balance"><span class="ic" data-i="chart"></span><span>Stats</span></a>
+        <a href="#agents"><span class="ic" data-i="plug"></span><span>Agents</span></a>
+      </div>
+      <div class="nav-bal"><span>Balance</span><b class="tn" id="navBal"></b></div>
+    </nav>
+
+    <main class="main">
+      <div class="grid">
+
+        <div class="col" id="c1">
+          <section class="panel" id="p-bal" data-on="today balance">
+            <p class="label">Balance</p>
+            <p class="big tn" id="big"></p>
+            <dl class="trio" id="trio"></dl>
+          </section>
+
+          <section class="panel" id="p-add" data-on="today">
+            <h2>Add time</h2>
+            <form id="form" novalidate aria-label="Add time">
+              <div class="seg" role="radiogroup" aria-label="Direction">
+                <button type="button" role="radio" id="sLess" aria-checked="false">− Less</button>
+                <button type="button" role="radio" id="sMore" aria-checked="true">+ More</button>
+              </div>
+              <div class="amount">
+                <label class="num"><input id="h" inputmode="numeric" pattern="[0-9]*" maxlength="2" placeholder="0" autocomplete="off" aria-label="Hours"><span>h</span></label>
+                <label class="num"><input id="m" inputmode="numeric" pattern="[0-9]*" maxlength="3" placeholder="0" autocomplete="off" aria-label="Minutes"><span>m</span></label>
+              </div>
+              <div class="quick">
+                <button type="button" data-q="15" aria-label="Add 15 minutes">15m</button>
+                <button type="button" data-q="30" aria-label="Add 30 minutes">30m</button>
+                <button type="button" data-q="60" aria-label="Add 1 hour">1h</button>
+                <button type="button" id="clear" hidden>Clear</button>
+              </div>
+              <div class="meta">
+                <label class="pick"><span id="dayText">Today</span><span data-i="chev" data-s="18"></span><input type="date" id="day" aria-label="Day"></label>
+                <input class="text" id="note" placeholder="Note" maxlength="40" autocomplete="off" aria-label="Note">
+              </div>
+              <button class="save" id="save" disabled>Save</button>
+            </form>
+          </section>
+        </div>
+
+        <div class="col" id="c2">
+          <div class="panel filters" id="p-range" data-on="balance today-wide">
+            <div class="range" id="range" role="group" aria-label="Period">
+              <button data-r="week" aria-pressed="false">Week</button>
+              <button data-r="month" aria-pressed="false">Month</button>
+              <button data-r="quarter" aria-pressed="false">Quarter</button>
+              <button data-r="year" aria-pressed="true">Year</button>
+              <button data-r="custom" aria-pressed="false">Custom</button>
+            </div>
+            <div class="custom" id="custom" hidden>
+              <label>From<input type="date" id="from"></label>
+              <label>To<input type="date" id="to"></label>
+            </div>
+            <p class="span">Change<b id="spanNet"></b><span id="spanDays"></span></p>
+          </div>
+
+          <section class="panel" id="p-chart" data-on="balance today-wide">
+            <h2>Balance</h2>
+            <div class="plot" id="plot" tabindex="0"></div>
+          </section>
+
+          <section class="panel" id="p-cal" data-on="balance today-wide">
+            <h2>Calendar</h2>
+            <div class="plot cal" id="cal" tabindex="0"></div>
+          </section>
+        </div>
+
+        <div class="col" id="c3">
+          <section class="panel" id="p-recent" data-on="today">
+            <h2>Recent</h2>
+            <ul class="list" id="recent"></ul>
+          </section>
+
+          <section class="panel" id="p-days" data-on="balance">
+            <h2>Days</h2>
+            <ul class="list" id="all"></ul>
+          </section>
+        </div>
+
+        <div class="col" id="a1">
+          <section class="panel" id="p-server" data-on="agents">
+            <h2>Agents</h2>
+            <p class="label" id="access">Read only, over MCP</p>
+            <div class="well">
+              <div><span class="k">Server</span><code id="url">https://tally.example/mcp</code></div>
+              <button class="copy" data-copy="url">Copy</button>
+            </div>
+            <div class="well">
+              <div><span class="k">Token</span><code id="tok">tly_••••••••a91f</code></div>
+              <button class="copy" data-copy="tok">Copy</button>
+            </div>
+            <label class="sw"><span>Let agents add time</span><input type="checkbox" role="switch" id="write"><i></i></label>
+          </section>
+        </div>
+
+        <div class="col" id="a2">
+          <section class="panel" id="p-tools" data-on="agents">
+            <h2>Tools</h2>
+            <ul class="list">
+              <li><span class="grow"><b>Balance now</b></span><code>get_balance</code></li>
+              <li><span class="grow"><b>Days in a range</b></span><code>list_days</code></li>
+              <li><span class="grow"><b>Balance by week</b></span><code>get_trend</code></li>
+              <li id="addTool" hidden><span class="grow"><b>Add time</b></span><code>add_day</code></li>
+            </ul>
+          </section>
+
+          <section class="panel" id="p-conn" data-on="agents">
+            <h2>Connected</h2>
+            <ul class="list">
+              <li><span class="grow"><b>Claude</b></span><span class="when">Balance, 2h ago</span></li>
+              <li><span class="grow"><b>Codex</b></span><span class="when">Days, yesterday</span></li>
+            </ul>
+          </section>
+        </div>
+
+      </div>
+    </main>
+  </div>
+  <div class="toast" id="toast" role="status"><span id="toastText"></span><button id="undo">Undo</button></div>
+</div>
+
+<script src="data.js"></script>
+<script src="charts.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
